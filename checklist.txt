@@ -1,0 +1,14 @@
+
+
+//Node Endpoints = https://fullnode.<SUI-NETWORK-VERSION>.sui.io:443 using JSON-RPC 
+//Sui Testnet and Devnet - 4 Nodes by Mysten Labs
+
+Checklist
+
+1. Create a Module called bank.move
+2. Create write and test Move Modules
+3. NFT Logic
+4. Publish and call Move modules on Devnet
+5. Verify and fix issues
+6. Verify and fix issues
+7. Publish Move modules on Mainnet
