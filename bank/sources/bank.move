@@ -48,7 +48,7 @@ module bank::bank {
     struct WithdrawEvent has drop, copy {
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
-        withdraw_amount: u64, //Withdrawal Amount
+        amount: u64, //Withdrawal Amount
 
     }
 
@@ -59,7 +59,7 @@ module bank::bank {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
-        transaction_amount: u64, //Tokens Deposited Amount
+        amount: u64, //Tokens Deposited Amount
     }
 
 
@@ -89,7 +89,7 @@ module bank::bank {
             id: unique_nft_id, //NFT ID
             nft_count_value: bank.number_of_deposits, //State var of count
             address_of_depositor: tx_context::sender(ctx), //similar to msg.sender via ctx object
-            transaction_amount: coin.value() //Pass copy of the coin.value aka amount
+            amount: coin.value() //Pass copy of the coin.value aka amount
         }; 
 
         
@@ -132,7 +132,7 @@ module bank::bank {
         event::emit(WithdrawEvent {
             asset_bank_id: bank.id,
             withdrawal_address: address_of_depositor,
-            withdraw_amount: amount
+            amount: amount
         });
     }
 
