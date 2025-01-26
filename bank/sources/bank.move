@@ -24,7 +24,7 @@ module bank::bank {
     }
 
     //Asset Bank Initialisation Function
-    public fun init(ctx: &mut TxContent){
+    public fun init(ctx: &mut TxContext){
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
             id: object::new(ctx), //New tx context object id
@@ -32,7 +32,7 @@ module bank::bank {
             number_of_current_nfts: 0, //Initial state of current (active) number of nfts
         };
         //Note to self check reference count
-        transfer::share_object(asset_bank)
+        transfer::share_object(asset_bank);
     }
 
 
