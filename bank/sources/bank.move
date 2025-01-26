@@ -65,7 +65,7 @@ module bank::bank {
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
-        coin::put(coin);//Consume coin (spending coin amount for NFT purchase) 
+        coin::put(&mut bank.id, coin);//Consume coin (spending coin amount for NFT purchase) 
 
         //3. Handle Asset Bank Internal State// - State first
         bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
@@ -102,7 +102,7 @@ module bank::bank {
 
         //1. Remove the balance equal to receipt.amount() from asset bank of the coin type
         let amount = receipt.amount; //payment amount
-        let address_of_depositor = receipt.address_of_depositor //depositor address on chain
+        let address_of_depositor = receipt.address_of_depositor; //depositor address on chain
 
         //Note to self: coin params - mutable ref of Coin (1st), amount to take (2nd)
         let coin = coin::take<T>(&mut bank.id, amount);//Covert the balance into a coin
