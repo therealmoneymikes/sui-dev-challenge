@@ -29,5 +29,28 @@ module bank::bank {
         address_of_depositor: address //Address of the depositor
     }
 
-    
+    //Deposit Method creates an NFT receipt and Transfer to caller
+    //&mut just like rust -> mutable reference to assetbank for updating the state
+    //Coin<T> - Sui Coin generic type for any coin type (SUI, USDC and USDT)
+    //mutable reference to TxContent Obj (just like rust)
+    //Make function an entry function to initialize entry point for tx
+    public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContent){
+
+        //1. Revert Balance is balence provider for the coin object is zero
+        //NOTE TO SELF: Pass by ref or not ???
+        assert!(coin.value > 0, "You cannot deposit with zero balance");
+        //2. Take User Coin and eposit it into the Bank Object (Asset Bank Storage)
+        
+        //Consume coin (spending coin amount for NFT purchase) 
+        coin::destroy(coin);
+
+        //Handle Asset Bank Internal State
+        bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
+        bank.number_of_current_nfts = bank.number_of_current_nfts + 1//Active NFTs State - Increase the number of active NFTs
+
+
+
+
+    }
+
 }
