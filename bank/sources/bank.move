@@ -63,7 +63,8 @@ module bank::bank {
         //1. Revert Balance is balence provider for the coin object is zero     
         assert!(coin.value() > 0, "You cannot deposit with zero balance");
 
-        //2. Take User Coin and eposit it into the Bank Object (Asset Bank Storage)
+        //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
+        //Switch take -> put (split issue on takee)
         coin::put(coin);//Consume coin (spending coin amount for NFT purchase) 
 
         //3. Handle Asset Bank Internal State// - State first
@@ -117,7 +118,11 @@ module bank::bank {
 
         //5. Emit an appropriate withdrawal event
         //Note to self - Withdraw needs the copy trait (event types) (run testing)
-        event::emit()
+        event::emit(WithdrawEvent {
+            asset_bank_id: bank.id,
+            withdrawal_address: address_of_depositor,
+            amount: amount
+        });
     }
 
 }
