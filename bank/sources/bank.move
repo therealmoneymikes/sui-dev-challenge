@@ -20,13 +20,23 @@ module bank::bank {
         id: ID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
+
     }
 
+
+    // ******** Asset Store Events ************/
     //Deposit event - Needs Drop Trait
     struct NFTDepositEvent has drop {
         asset_bank_id: ID, //Asset bank ID 
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
+    }
+
+    //Withdrawal event
+    struct NFTWithdrawEvent has drop {
+        asset_bank_id: ID, //Asset Bank Struct ID 
+        withdrawal_address: address, //Address of the recipient
+        amount: u64 //Withdrawal Amount
     }
 
     //NFT Receipt Object
@@ -36,6 +46,8 @@ module bank::bank {
         address_of_depositor: address, //Address of the depositor (user)
         transaction_amount: u64, //Tokens Deposited Amount
     }
+
+
 
 
 
