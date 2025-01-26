@@ -48,7 +48,7 @@ module bank::bank {
     struct WithdrawEvent has drop, copy {
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
-        amount: u64, //Withdrawal Amount
+        withdraw_amount: u64, //Withdrawal Amount
 
     }
 
@@ -132,7 +132,7 @@ module bank::bank {
         event::emit(WithdrawEvent {
             asset_bank_id: bank.id,
             withdrawal_address: address_of_depositor,
-            amount: amount
+            withdraw_amount: amount
         });
     }
 
