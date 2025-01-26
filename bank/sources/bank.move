@@ -33,14 +33,15 @@ module bank::bank {
         address_of_depositor: address //Address of the depositor
     }
 
-    //Withdrawal event
+    //Withdrawal event - Needs Drop Trait
     struct WithdrawEvent has drop {
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
-        amount: u64 //Withdrawal Amount
+        amount: u64, //Withdrawal Amount
+
     }
 
-    //NFT Receipt Object
+    //NFT Receipt Object - T is the type of token deposited
     struct Receipt<T> has key, store, drop {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
@@ -48,7 +49,7 @@ module bank::bank {
         transaction_amount: u64, //Tokens Deposited Amount
     }
 
-
+    //In
 
 
 
@@ -93,6 +94,30 @@ module bank::bank {
 
 
 
+    }
+
+    //Expose public method to withdraw funds by returning minted NFT
+    public entry fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>){
+
+        //1. Remove the balance equal to receipt.amount() from asset bank of the coin type
+        let amount = receipt.amount; //payment amount
+        let address_of_depositor = receipt.address_of_depositor //depositor address on chain
+
+        //Note to self: coin params - mutable ref of Coin (1st), amount to take (2nd)
+        let coin = coin::take<T>(&mut bank.id, amount);//Covert the balance into a coin
+
+        //2. Transfer coin to receipt.depositor (nft depositor)
+        transfer::transfer(coin, address_of_depositor);
+
+        //3. Handle NFT count state of the Asset Bank (decrement by 1)
+        bank.number_of_current_nfts = bank.number_of_current_nfts - 1;
+
+        //4. Destroy the receipt (NFT receipt object)
+        object::delete(receipt);
+
+        //5. Emit an appropriate withdrawal event
+        //Note to self - Withdraw needs the copy trait (event types) (run testing)
+        event::emit()
     }
 
 }
