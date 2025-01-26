@@ -40,7 +40,7 @@ module bank::bank {
     }
 
     //NFT Receipt Object
-    struct Receipt<T> has key {
+    struct Receipt<T> has key, store, drop {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
