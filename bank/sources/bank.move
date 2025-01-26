@@ -64,7 +64,7 @@ module bank::bank {
         assert!(coin.value() > 0, "You cannot deposit with zero balance");
 
         //2. Take User Coin and eposit it into the Bank Object (Asset Bank Storage)
-        coin::take(coin);//Consume coin (spending coin amount for NFT purchase) 
+        coin::put(coin);//Consume coin (spending coin amount for NFT purchase) 
 
         //3. Handle Asset Bank Internal State// - State first
         bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
