@@ -29,6 +29,16 @@ module bank::bank {
         address_of_depositor: address //Address of the depositor
     }
 
+    //NFT Receipt Object
+    struct Receipt<T> has key {
+        id: ID, //Unique ID for NFT's the users receive
+        nft_count_value: u64, //NFT Count Prop
+        address_of_depositor: address, //Address of the depositor (user)
+        transaction_amount: u64, //Tokens Deposited Amount
+    }
+
+
+
     //Deposit Method creates an NFT receipt and Transfer to caller
     //&mut just like rust -> mutable reference to assetbank for updating the state
     //Coin<T> - Sui Coin generic type for any coin type (SUI, USDC and USDT)
@@ -49,6 +59,14 @@ module bank::bank {
         bank.number_of_current_nfts = bank.number_of_current_nfts + 1//Active NFTs State - Increase the number of active NFTs
 
 
+        //NFT Transaction receipt for user
+        let unique_nft_id = object::new_id(ctx); //Pass mutable txContent ref to Generate unique nft id
+        let nft_object = NFT {
+            id: unique_nft_id, //NFT ID
+            transaction_details: string::utf8(b"Your deposit is successful") //Info in bytes 
+        }; 
+
+        //Deposit Events
 
 
     }
