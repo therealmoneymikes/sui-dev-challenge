@@ -21,7 +21,18 @@ module bank::bank {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
+    }
 
+    //Asset Bank Initialisation Function
+    public fun init(ctx: &mut TxContent){
+        //Initialise asset bank, mutuable ref
+        let asset_bank = AssetBank {
+            id: object::new(ctx), //New tx context object id
+            number_of_deposits: 0, //Initial state of deposit count 
+            number_of_current_nfts: 0, //Initial state of current (active) number of nfts
+        };
+        //Note to self check reference count
+        transfer::share_object(asset_bank)
     }
 
 
