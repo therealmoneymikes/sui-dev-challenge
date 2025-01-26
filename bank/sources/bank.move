@@ -17,7 +17,7 @@ module bank::bank {
 
 //UID - id structure with type address and key trait
 //ID - General ID
-    struct AssetBank has key, copy, drop {
+    struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
@@ -27,14 +27,14 @@ module bank::bank {
 
     // ******** Asset Store Events ************/
     //Deposit event - Needs Drop Trait
-    struct DepositEvent has drop {
+    struct DepositEvent has drop, copy {
         asset_bank_id: UID, //Asset bank ID 
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
     }
 
     //Withdrawal event - Needs Drop Trait
-    struct WithdrawEvent has drop {
+    struct WithdrawEvent has drop, copy {
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
@@ -42,14 +42,14 @@ module bank::bank {
     }
 
     //NFT Receipt Object - T is the type of token deposited
-    struct Receipt<T> has key, store, drop {
+    //traits: key for onchain ID and store for global storage
+    //Note to self: Removed drop trait it destroyed on withdrawal
+    struct Receipt<T> has key, store {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         transaction_amount: u64, //Tokens Deposited Amount
     }
-
-    //In
 
 
 
@@ -64,7 +64,7 @@ module bank::bank {
         assert!(coin.value() > 0, "You cannot deposit with zero balance");
 
         //2. Take User Coin and eposit it into the Bank Object (Asset Bank Storage)
-        coin::destroy(coin);//Consume coin (spending coin amount for NFT purchase) 
+        coin::take(coin);//Consume coin (spending coin amount for NFT purchase) 
 
         //3. Handle Asset Bank Internal State// - State first
         bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
@@ -82,7 +82,7 @@ module bank::bank {
 
         
         //5. Transfer NFT to caller (our user)
-        transfer::transfer(nft_receipt, tx_context::sender(ctx))//Note Self check move scopes
+        transfer::transfer(nft_receipt, tx_context::sender(ctx));//Note Self check move scopes
 
 
         //6. Emit an appropraite deposit event
@@ -90,7 +90,7 @@ module bank::bank {
             asset_bank_id: bank.id, //Asset Bank ID
             deposit_amount: coin.value(), //Deposit Amount
             address_of_depositor: tx_context::sender(ctx)
-        })
+        });
 
 
 
