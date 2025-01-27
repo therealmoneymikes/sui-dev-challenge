@@ -72,7 +72,7 @@ module bank::bank {
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.value() > 0, errors::);
+        assert!(coin.value() > 0, errors::EZERO_USER_INSUFFICIENT_FUNDS);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)

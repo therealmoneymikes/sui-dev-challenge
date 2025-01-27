@@ -12,7 +12,7 @@ module bank::bank_tests {
 
     //1. Test Asset Bank Initialisation
     #[test]
-    fun initialise_asset_bank() {
+    fun test_asset_bank_initialisation() {
         let sender_address = @0x0;
         let new_test_scenario = test_scenario::begin(&sender_address);//Scenario Object Generation
 
@@ -20,7 +20,7 @@ module bank::bank_tests {
         let ctx = test_scenario::ctx(&mut new_test_scenario); //Pass mut ref new test scenario
 
         //Call AssetBank init function from bank mod 
-        bank::init(&ctx); //Pass mut context object
+        bank::init(ctx); //Pass mut context object
 
         //Scenario - Assert that initial asset bank state for nft count and deposit count should be 0
         let asset_bank = test_scenario::take_shared<bank::AssetBank>(&new_test_scenario);
@@ -28,7 +28,7 @@ module bank::bank_tests {
         assert!(asset_bank.number_of_deposits == 0, errors::EZERO_DEPOSIT_COUNT);//number of deposit should be zero
         assert!(asset_bank.number_of_current_nfts == 0, errors::EZERO_NFTS_COUNT);//number of nfts should be zero
 
-        //Retrieve asset_bank object to the owner by value
+        //Retrieve asset_bank object to the owner by value - End Taken state
         test_scenario::return_shared(asset_bank);
 
         //Test complete
@@ -36,5 +36,36 @@ module bank::bank_tests {
 
 
     }
+
+    //2. Test Deposit Zero Tokens Faliure
+    #[test]
+    #[expected_failure]
+    fun test_user_depositing_zero_tokens_should_fail(){
+        let start_address = @0x0;
+        let admin_address = @0x1;
+
+        let scenario = test_scenario::begin(start_address);//
+        
+      
+
+
+        //Initialise Asset Bank Contract 
+        let test_admin = test_scenario::next_tx(&mut scenario, @0x1); //1st Tx by admin
+        let asset_bank = bank::init(&test_admin);
+
+        //Simulation of test_user having no coins 
+        let test_user = test_scenario::next_tx(&mut scenario, @0x2);//2nd Tx by user 
+        let test_user_coins = coin::mint(&test_user, 0); //No coins minted
+
+        //Simulate user depositing zero coins into the asset bank 
+        bank::deposit(&mut asset_bank, test_user_coins, &test_user);
+
+        //Asset Bank State - Deposit Count, NFT count
+        test_scenario::end(scenario);
+
+
+
+    }
+   
 
 }
