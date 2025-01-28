@@ -1,13 +1,11 @@
 [package]
 name = "bank"
 version = "0.0.1"
-edition = "legacy" # edition = "legacy" to use legacy (pre-2024) Move
-authors = ["Michael Roberts (michael.techroberts@gmail.com)"]      
-# license = "MIT"
+authors = ["Michael Roberts (michael.techroberts@gmail.com)"]
+license = "MIT" # Uncomment and specify the correct license
 
 [dependencies]
-Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "framework/devnet" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }
 
 [addresses]
-bank = "0x0"
-
+bank = "0x0" # Replace with a real address for deployment

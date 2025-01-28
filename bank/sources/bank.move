@@ -24,7 +24,7 @@ module bank::bank {
     }
 
     //Asset Bank Initialisation Function
-    public fun init(ctx: &mut TxContext){
+    entry fun init(ctx: &mut TxContext){
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
             id: object::new(ctx), //New tx context object id
