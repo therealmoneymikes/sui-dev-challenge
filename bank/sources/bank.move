@@ -6,7 +6,7 @@ module bank::bank {
     use sui::coin::{Self, Coin};
     use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
-    use bank::ban
+    use bank::errors;
    
 
     //Asset Bank for NFT TX Data
@@ -15,8 +15,8 @@ module bank::bank {
     //Copy Trait = copy on OO
     //Key for Sui Global Storage Operations
 
-//UID - id structure with type address and key trait
-//ID - General ID
+    //UID - id structure with type address and key trait
+    //ID - General ID
     public struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
