@@ -7,7 +7,7 @@ module bank::bank {
     use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
     use bank::errors;
-   
+    use sui::balance;
 
     //Asset Bank for NFT TX Data
     //Add Copy Trait to clone 
@@ -62,7 +62,7 @@ module bank::bank {
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
-        coin_type: coin::Coin<T>
+        coin_type: sui::balance::Balance<T>
     }
 
 
@@ -75,7 +75,7 @@ module bank::bank {
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.balance() > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
+        assert!(coin.value() > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
