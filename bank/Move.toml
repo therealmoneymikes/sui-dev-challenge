@@ -1,8 +1,10 @@
 [package]
 name = "bank"
 version = "0.0.1"
+edition = "2024.beta"
 authors = ["Michael Roberts (michael.techroberts@gmail.com)"]
 license = "MIT" # Uncomment and specify the correct license
+
 
 [dependencies]
 Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "testnet" }

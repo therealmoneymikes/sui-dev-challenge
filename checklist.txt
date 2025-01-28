@@ -2,7 +2,7 @@
 
 //Node Endpoints = https://fullnode.<SUI-NETWORK-VERSION>.sui.io:443 using JSON-RPC 
 //Sui Testnet and Devnet - 4 Nodes by Mysten Labs
-
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework", rev = "framework/testnet" }
 Checklist
 
 1. Create a Module called bank.move ✅

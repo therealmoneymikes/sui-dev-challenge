@@ -1,12 +1,12 @@
 module bank::bank {
 
-    use std::string::{Self, String}; //String Package for Self and String - String defs
-    use sui::object::{Self, UID, ID}; //Object package for Self an UID for SUI Unique ID
-    use sui::tx_context::{Self, TxContext}; //Self obj and TxContext obj
+    use std::string::{String}; //String Package for Self and String - String defs
+    use sui::object::{UID, ID}; //Object package for Self an UID for SUI Unique ID
+    use sui::tx_context::{TxContext}; //Self obj and TxContext obj
     use sui::coin::{Self, Coin};
     use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
-    use bank::errors; // Global Errors Module
+    use bank::ban
    
 
     //Asset Bank for NFT TX Data
@@ -17,14 +17,14 @@ module bank::bank {
 
 //UID - id structure with type address and key trait
 //ID - General ID
-    struct AssetBank has key {
+    public struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
     }
 
     //Asset Bank Initialisation Function
-    entry fun init(ctx: &mut TxContext){
+    fun init(ctx: &mut tx_context::TxContext){
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
             id: object::new(ctx), //New tx context object id
@@ -38,14 +38,14 @@ module bank::bank {
 
     // ******** Asset Store Events ************/
     //Deposit event - Needs Drop Trait
-    struct DepositEvent has drop, copy {
+    public struct DepositEvent has key  {
         asset_bank_id: UID, //Asset bank ID 
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
     }
 
     //Withdrawal event - Needs Drop Trait
-    struct WithdrawEvent has drop, copy {
+    public struct WithdrawEvent has key {
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
