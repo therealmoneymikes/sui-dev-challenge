@@ -1,13 +1,12 @@
 module bank::bank {
 
-    use std::string::{String}; //String Package for Self and String - String defs
-    use sui::object::{UID, ID}; //Object package for Self an UID for SUI Unique ID
-    use sui::tx_context::{TxContext}; //Self obj and TxContext obj
+    // use sui::object::{UID, ID}; //Object package for Self an UID for SUI Unique ID
+    // use sui::tx_context::{TxContext}; //Self obj and TxContext obj
     use sui::coin::{Self, Coin};
-    use sui::transfer; //Transfer mod for transfers txs
+    // use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
     use bank::errors;
-    use sui::balance;
+    // use sui::balance::{Self, Balance}
 
     //Asset Bank for NFT TX Data
     //Add Copy Trait to clone 
@@ -24,7 +23,7 @@ module bank::bank {
     }
 
     //Asset Bank Initialisation Function
-    fun init(ctx: &mut tx_context::TxContext){
+    fun init(ctx: &mut TxContext){
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
             id: object::new(ctx), //New tx context object id
@@ -40,7 +39,6 @@ module bank::bank {
     //Deposit event - Needs Drop Trait
     public struct DepositEvent has key  {
         id: sui::object::UID,
-        asset_bank_id: UID, //Asset bank ID 
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
     }
@@ -48,7 +46,6 @@ module bank::bank {
     //Withdrawal event - Needs Drop Trait
     public struct WithdrawEvent has key {
         id: sui::object::UID,
-        asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
 
@@ -58,7 +55,7 @@ module bank::bank {
     //traits: key for onchain ID and store for global storage
     //Note to self: Removed drop trait it destroyed on withdrawal
     public struct Receipt<T> has key, store {
-        id: UID, //Unique ID for NFT's the users receive
+        id: sui::object::UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
@@ -75,7 +72,7 @@ module bank::bank {
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.value() > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
+        assert!(coin.value > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
@@ -101,12 +98,12 @@ module bank::bank {
 
 
         //6. Emit an appropraite deposit event
-        event::emit(DepositEvent {
+        // event::emit(DepositEvent {
 
-            asset_bank_id: bank.id, //Asset Bank ID
-            deposit_amount: coin.value(), //Deposit Amount
-            address_of_depositor: tx_context::sender(ctx)
-        });
+        //     id: object,
+        //     deposit_amount: coin.value(), //Deposit Amount
+        //     address_of_depositor: tx_context::sender(ctx)
+        // });
 
 
 
@@ -133,11 +130,11 @@ module bank::bank {
 
         //5. Emit an appropriate withdrawal event
         //Note to self - Withdraw needs the copy trait (event types) (run testing)
-        event::emit(WithdrawEvent {
-            asset_bank_id: bank.id,
-            withdrawal_address: address_of_depositor,
-            amount: amount
-        });
+        // event::emit(WithdrawEvent {
+        //     id: sui::object::UID,
+        //     withdrawal_address: address_of_depositor,
+        //     amount: amount
+        // });
     }
 
 }
