@@ -1,7 +1,7 @@
 
 
 //Global Error Files
-
+#[allow(unused_const)]
 module bank::errors {
 
     /* Asset Bank State Error Messages*/

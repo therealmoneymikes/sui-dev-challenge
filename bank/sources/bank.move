@@ -39,6 +39,7 @@ module bank::bank {
     // ******** Asset Store Events ************/
     //Deposit event - Needs Drop Trait
     public struct DepositEvent has key  {
+        id: sui::object::UID,
         asset_bank_id: UID, //Asset bank ID 
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
@@ -46,6 +47,7 @@ module bank::bank {
 
     //Withdrawal event - Needs Drop Trait
     public struct WithdrawEvent has key {
+        id: sui::object::UID,
         asset_bank_id: UID, //Asset Bank Struct ID 
         withdrawal_address: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
@@ -55,11 +57,12 @@ module bank::bank {
     //NFT Receipt Object - T is the type of token deposited
     //traits: key for onchain ID and store for global storage
     //Note to self: Removed drop trait it destroyed on withdrawal
-    struct Receipt<T> has key, store {
+    public struct Receipt<T> has key, store {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
+        coin_type: coin::Coin<T>
     }
 
 
@@ -72,7 +75,7 @@ module bank::bank {
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.value() > 0, errors::EZERO_USER_INSUFFICIENT_FUNDS);
+        assert!(coin.balance() > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
@@ -99,6 +102,7 @@ module bank::bank {
 
         //6. Emit an appropraite deposit event
         event::emit(DepositEvent {
+
             asset_bank_id: bank.id, //Asset Bank ID
             deposit_amount: coin.value(), //Deposit Amount
             address_of_depositor: tx_context::sender(ctx)
