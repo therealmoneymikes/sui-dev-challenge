@@ -6,6 +6,7 @@ module bank::bank {
     // use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
     use bank::errors;
+    use std::string::String;
     // use sui::balance::{Self, Balance}
 
     //Asset Bank for NFT TX Data
@@ -16,6 +17,7 @@ module bank::bank {
 
     //UID - id structure with type address and key trait
     //ID - General ID
+    //Note to self: drop and copy conflicts with key
     public struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
@@ -23,7 +25,7 @@ module bank::bank {
     }
 
     //Asset Bank Initialisation Function
-    fun init(ctx: &mut TxContext){
+   fun init(ctx: &mut TxContext){
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
             id: object::new(ctx), //New tx context object id
@@ -32,6 +34,7 @@ module bank::bank {
         };
         //Note to self check reference count
         transfer::share_object(asset_bank);
+        
     }
 
 
@@ -52,14 +55,12 @@ module bank::bank {
     }
 
     //NFT Receipt Object - T is the type of token deposited
-    //traits: key for onchain ID and store for global storage
-    //Note to self: Removed drop trait it destroyed on withdrawal
     public struct Receipt<T> has key, store {
-        id: sui::object::UID, //Unique ID for NFT's the users receive
+        id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
-        coin_type: sui::balance::Balance<T>
+       
     }
 
 
@@ -69,10 +70,10 @@ module bank::bank {
     //Coin<T> - Sui Coin generic type for any coin type (SUI, USDC and USDT)
     //mutable reference to TxContext Obj (just like rust)
     //Make function an entry function to initialize entry point for tx
-    public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
+     entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.value > 0, errors::GEZERO_USER_INSUFFICIENT_FUNDS);
+        assert!(coin.value() > 0, 0);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
