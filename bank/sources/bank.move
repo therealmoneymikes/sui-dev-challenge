@@ -5,7 +5,7 @@ module bank::bank {
     // use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
     use bank::errors;
-    use std::string::String;
+    
     use sui::transfer;
     // use sui::balance::{Self, Balance}
 
@@ -18,7 +18,7 @@ module bank::bank {
     //UID - id structure with type address and key trait
     //ID - General ID
     //Note to self: drop and copy conflicts with key
-    public struct AssetBank has key {
+    public struct AssetBank has key, store {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
@@ -26,7 +26,7 @@ module bank::bank {
     
  
     //Asset Bank Initialisation Function
-   fun init(ctx: &mut TxContext){
+   public fun init(ctx: &mut TxContext){
 
         //Initialise asset bank, mutuable ref
         let asset_bank = AssetBank {
@@ -36,8 +36,10 @@ module bank::bank {
         };
         //Note to self check reference count
         transfer::share_object(asset_bank);
+        asset_bank
 
     }
+
 
 
     // ******** Asset Store Events ************/
@@ -57,7 +59,7 @@ module bank::bank {
     }
 
     //NFT Receipt Object - T is the type of token deposited
-    public struct Receipt<T> has key, store {
+    public struct Receipt<T> has key {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
@@ -73,17 +75,20 @@ module bank::bank {
     //mutable reference to TxContext Obj (just like rust)
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
 
+
+
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(coin.balance > 0, 0);
+        assert!(&coin.balance > 0, 0);
 
         //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
         //Switch take -> put (split issue on takee)
-        coin::put(&mut bank.id, coin);//Consume coin (spending coin amount for NFT purchase) 
+        transfer::public_transfer(value, ctx.owner()); //Consume coin (spending coin amount for NFT purchase) 
 
         //3. Handle Asset Bank Internal State// - State first
         bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
         bank.number_of_current_nfts = bank.number_of_current_nfts + 1;//Active NFTs State - Increase the number of active NFTs
-
+        
+    
 
         //4. NFT Transaction receipt for user
         let unique_nft_id = object::new(ctx); //Pass mutable txContext ref to Generate unique nft id
@@ -102,7 +107,7 @@ module bank::bank {
         //6. Emit an appropraite deposit event
         event::emit(DepositEvent {
 
-            id: object::new(ctx),
+            id: object::uid_to_inner(&unique_nft_id),//Take the Unique ID from tx
             deposit_amount: coin.value(), //Deposit Amount
             address_of_depositor: tx_context::sender(ctx)
         });
@@ -112,7 +117,7 @@ module bank::bank {
     }
 
     //Expose public method to withdraw funds by returning minted NFT
-    public entry fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>, ctx: &mut TxContext){
+    public entry fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>){
 
         //1. Remove the balance equal to receipt.amount() from asset bank of the coin type
         let amount = receipt.amount; //payment amount
