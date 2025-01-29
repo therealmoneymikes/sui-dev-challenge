@@ -100,19 +100,19 @@ module bank::bank {
 
 
         //6. Emit an appropraite deposit event
-        // event::emit(DepositEvent {
+        event::emit(DepositEvent {
 
-        //     id: object,
-        //     deposit_amount: coin.value(), //Deposit Amount
-        //     address_of_depositor: tx_context::sender(ctx)
-        // });
+            id: object::new(ctx),
+            deposit_amount: coin.value(), //Deposit Amount
+            address_of_depositor: tx_context::sender(ctx)
+        });
 
 
 
     }
 
     //Expose public method to withdraw funds by returning minted NFT
-    public entry fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>){
+    public entry fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>, ctx: &mut TxContext){
 
         //1. Remove the balance equal to receipt.amount() from asset bank of the coin type
         let amount = receipt.amount; //payment amount
@@ -132,11 +132,11 @@ module bank::bank {
 
         //5. Emit an appropriate withdrawal event
         //Note to self - Withdraw needs the copy trait (event types) (run testing)
-        // event::emit(WithdrawEvent {
-        //     id: sui::object::UID,
-        //     withdrawal_address: address_of_depositor,
-        //     amount: amount
-        // });
+        event::emit(WithdrawEvent {
+        id: object::new(ctx),
+        withdrawal_address: address_of_depositor,
+        amount: amount
+        });
     }
 
 }
