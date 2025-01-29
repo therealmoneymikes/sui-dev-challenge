@@ -59,7 +59,7 @@ module bank::bank {
     }
 
     //NFT Receipt Object - T is the type of token deposited
-    public struct Receipt<T> has key {
+    public struct Receipt<T> has key, store {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
