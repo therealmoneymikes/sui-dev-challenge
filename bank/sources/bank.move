@@ -18,7 +18,7 @@ module bank::bank {
     //UID - id structure with type address and key trait
     //ID - General ID
     //Note to self: drop and copy conflicts with key
-    public struct AssetBank has key, store {
+    public struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
         number_of_current_nfts: u64 //For current of nft deposited in
