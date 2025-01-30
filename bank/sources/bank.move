@@ -9,6 +9,8 @@ module bank::bank {
     use sui::object::{Self, UID};
     use sui::balance::{Self, Balance};
     use sui::bag::{Self, Bag};
+    use sui::dynamic_field;
+    
     
     // use sui::balance::{Self, Balance}
 
@@ -38,8 +40,8 @@ module bank::bank {
     //Withdrawal event
     public struct WithdrawEvent has copy, drop {
         nft_receipt_number: u64,
-        address_of_depositor: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
+        address_of_depositor: address, //Address of the recipient (Person who deposited)
 
     }
 
@@ -47,7 +49,8 @@ module bank::bank {
     //Claim state to avoid double spending
     public struct Receipt<phantom T> has key, store {
         id: UID, //Unique ID for NFT's the users receive
-        nft_count_value: u64, //NFT Count Prop
+        number_of_active_nfts: u64, //NFT Count Prop
+        number_of_deposits: u64, //Number of deposit in the Asset Bank
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
         claimed: bool, //Claim State (set to true on creation)
@@ -77,39 +80,51 @@ module bank::bank {
     //Coin<T> - Sui Coin generic type for any coin type (SUI, USDC and USDT)
     //mutable reference to TxContext Obj (just like rust)
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
-
+        let deposit_amount = coin::value(&coin); //get coin by ref and pass it to value method - Returns amount
         //1. Revert Balance is balence provider for the coin object is zero     
-        assert!(&coin.balance > 0, 0);
+        assert!(deposit_amount > 0, 0);
 
-        //2. Take User Coin and deposit it into the Bank Object (Asset Bank Storage)
-        //Switch take -> put (split issue on takee)
-        transfer::public_transfer(value, ctx.owner()); //Consume coin (spending coin amount for NFT purchase) 
+        //2. Update Asset Bank by key-value pair dynamic field instead of balance only 
+        //PART A - If Statement checks if depositor address and balance does exist before creating a new entry
+        if(!dynamic_field::exists_<T, Balance<T>>(&bank.balances)){
+            let balance = balance::zero<T>(); //sets balance key to 0 first
+            //Note to self - Add has 3 args - &mut object, name, coin value (Value)
+            dynamic_field::add(&mut bank.balances, T, balance); //Add  
+        };
 
-        //3. Handle Asset Bank Internal State// - State first
-        bank.number_of_deposits = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
-        bank.number_of_current_nfts = bank.number_of_current_nfts + 1;//Active NFTs State - Increase the number of active NFTs
+        //PART B - Add new user balance to the asset coin amount
+        //Taking a mutable reference to the bag table balances dynamic field to add to asset bank tables
+        //Returns a mutable reference field Value
+        let balance = dynamic_field::borrow_mut<T, Balance<T>>(&mut bank.balances);
+        balance::join(balance, coin::into_balance(coin)); //Join users coin amount of type T to balance value field
+
+        //3. Handle Asset Bank Internal State
+        //Fix: Pass receipt_number instead of incrementation logic
         
-    
-
-        //4. NFT Transaction receipt for user
-        let unique_nft_id = object::new(ctx); //Pass mutable txContext ref to Generate unique nft id
-        let nft_receipt = Receipt {
-            id: unique_nft_id, //NFT ID
-            nft_count_value: bank.number_of_deposits, //State var of count
+        //PART A - Generate NFT Receipt Object
+        receipt_number = bank.number_of_deposits + 1; //Deposit State - Increase the num of deposits
+        //4. NFT Transaction receipt for user and send it
+        let receipt_id = object::new(ctx); //Pass mutable txContext ref to Generate unique nft id
+        let nft_receipt = Receipt<T> {
+            id: receipt_id, //NFT Receipt ID
+            nft_count_value: receipt_number, //State var of count
             address_of_depositor: tx_context::sender(ctx), //similar to msg.sender via ctx object
-            amount: coin.value() //Pass copy of the coin.value aka amount
+            amount: deposit_amount, //Add deposit amount from var
+            claimed: true //Set claimed state to true when user generates an NFT
         }; 
 
-        
-        //5. Transfer NFT to caller (our user)
-        transfer::transfer(nft_receipt, ctx.sender());//Note Self check move scopes
+        //Transfter NFT receipt with claimed prop set to true
+        transfer::transfer(nft_receipt, tx_context::sender(ctx));
 
+        //PARTB - Update Asset State before emitting the event
+        bank.deposit_count = receipt_number; //Deposit Count State (u64 val)
+        bank.number_of_active_nfts = bank.active_nfts + 1; //Increment Active NFTs by one;
 
-        //6. Emit an appropraite deposit event
-        event::emit(DepositEvent {
-
-            id: object::uid_to_inner(&unique_nft_id),//Take the Unique ID from tx
-            deposit_amount: coin.value(), //Deposit Amount
+        //4. Emit an appropraite deposit event
+        //Carry T type
+        event::emit(DepositEvent<T> {
+            nft_receipt_number: receipt_number, //Assign NFT receipt number to Deposit Event
+            deposit_amount, //Deposit Amount - here deposit_amount:deposit_amount evalautes to deposit_amount (like JS/TS)
             address_of_depositor: tx_context::sender(ctx)
         });
 
