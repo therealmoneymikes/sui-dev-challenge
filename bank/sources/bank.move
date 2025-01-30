@@ -44,14 +44,32 @@ module bank::bank {
     }
 
     //NFT Receipt Object - T is the type of token deposited
-    public struct Receipt<T> has key, store {
+    //Claim state to avoid double spending
+    public struct Receipt<phantom T> has key, store {
         id: UID, //Unique ID for NFT's the users receive
         nft_count_value: u64, //NFT Count Prop
         address_of_depositor: address, //Address of the depositor (user)
         amount: u64, //Tokens Deposited Amount
-       
+        claimed: bool, //Claim State (set to true on creation)
     }
 
+    //Contract Initation Function (Init)
+    public fun init(ctx: &mut TxContext): AssetBank {
+        //Create a new asset bank
+        //Note to self: new returns ctx.fresh_object_address() as bytes prop for UID
+        let asset_bank = AssetBank {
+            id: object::new(ctx), //Assign UID to register on Sui
+            owner: tx_context::sender(ctx), //Contract Initialiser -> Admin 
+            number_of_deposits: 0,//Initial Deposit State is 0 on deployment
+            number_of_current_nfts: 0,//Initial NFT Count state is 0 on deployment
+            balances: bag::new(ctx),//Initialize a new store table object to keep track of user balances
+            receipts: bag::new(ctx),//Initialize a new store table object to keep track of receipts
+        };
+
+        //Share the AssetBank Object with user to call the methods deposit and withdraw
+        transfer::share_object(asset_bank);
+        asset_bank
+    }
 
 
     //Deposit Method creates an NFT receipt and Transfer to caller
@@ -59,8 +77,6 @@ module bank::bank {
     //Coin<T> - Sui Coin generic type for any coin type (SUI, USDC and USDT)
     //mutable reference to TxContext Obj (just like rust)
     public entry fun deposit<T>(bank: &mut AssetBank, coin: Coin<T>, ctx: &mut TxContext){
-
-
 
         //1. Revert Balance is balence provider for the coin object is zero     
         assert!(&coin.balance > 0, 0);
