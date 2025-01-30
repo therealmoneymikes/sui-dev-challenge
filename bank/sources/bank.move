@@ -2,58 +2,43 @@ module bank::bank {
 
 
     use sui::coin::{Self, Coin};
-    // use sui::transfer; //Transfer mod for transfers txs
+    use sui::transfer; //Transfer mod for transfers txs
     use sui::event; //For Handling Events for NFT contract interaction
     use bank::errors;
+    use sui::tx_context::TxContext;
+    use sui::object::{Self, UID};
+    use sui::balance::{Self, Balance};
+    use sui::bag::{Self, Bag};
     
-    use sui::transfer;
     // use sui::balance::{Self, Balance}
 
     //Asset Bank for NFT TX Data
-    //Add Copy Trait to clone 
-    //Drop Trait = drop to end lifetime at the EOO
-    //Copy Trait = copy on OO
-    //Key for Sui Global Storage Operations
+    //Add Copy Trait to clone, Drop Trait = drop to end lifetime at the EOO, Copy Trait = copy on OO, Key for Sui Global Storage Operations
 
-    //UID - id structure with type address and key trait
-    //ID - General ID
-    //Note to self: drop and copy conflicts with key
+    //UID - id structure with type address and key traitID - General ID, Note to self: drop and copy conflicts with key
     public struct AssetBank has key {
         id: UID, //UID for AssetBank Unique 
         number_of_deposits: u64, //For tracking number of deposits to the bank
-        number_of_current_nfts: u64 //For current of nft deposited in
+        number_of_current_nfts: u64, //For current of nft deposited in
+        admin: address, //Admin of the Asset Bank Obkect
+        balances: Bag, //Map object like ts for storing user balances  
+        receipts: Bag, //Store all the deposit receipts
     }
     
- 
-    //Asset Bank Initialisation Function
-   public fun init(ctx: &mut TxContext){
-
-        //Initialise asset bank, mutuable ref
-        let asset_bank = AssetBank {
-            id: object::new(ctx), //New tx context object id
-            number_of_deposits: 0, //Initial state of deposit count 
-            number_of_current_nfts: 0, //Initial state of current (active) number of nfts
-        };
-        //Note to self check reference count
-        transfer::share_object(asset_bank);
-        asset_bank
-
-    }
-
 
 
     // ******** Asset Store Events ************/
     //Deposit event 
     public struct DepositEvent has copy, drop  {
-        id: ID,
+        nft_receipt_number: u64,
         deposit_amount: u64, //Deposit amount 
         address_of_depositor: address //Address of the depositor
     }
 
     //Withdrawal event
     public struct WithdrawEvent has copy, drop {
-        id: ID,
-        withdrawal_address: address, //Address of the recipient
+        nft_receipt_number: u64,
+        address_of_depositor: address, //Address of the recipient
         amount: u64, //Withdrawal Amount
 
     }
