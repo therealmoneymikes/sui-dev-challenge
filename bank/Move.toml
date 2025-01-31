@@ -12,3 +12,4 @@ Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-fram
 
 [addresses]
 bank = "0x0" # Replace with a real address for deployment
+nft_tutorial = "0x2"
