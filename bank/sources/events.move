@@ -2,7 +2,7 @@ module bank::events {
     use sui::event;
 
 
-      // ******** Asset Store Events ************/
+    // ******** Asset Store Events ************/
     //Deposit event 
     public struct DepositEvent has copy, drop  {
         nft_receipt_number: u64,
