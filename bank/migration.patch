@@ -1,0 +1,11 @@
+--- .\sources\bank.move
++++ .\sources\bank.move
+@@ -18 +18 @@
+-    struct DigitalArt has key, store {
++    public struct DigitalArt has key, store {
+@@ -26 +26 @@
+-    struct Gallery has key, store {
++    public struct Gallery has key, store {
+@@ -32 +32 @@
+-    struct LoanedDigitalArt {
++    public struct LoanedDigitalArt {
