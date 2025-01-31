@@ -17,4 +17,16 @@ module bank::events {
         address_of_depositor: address, //Address of the recipient (Person who deposited)
 
     }
+
+    //Event of Admin (Controller Caller) initialising the AssetBank
+    public struct AdminCapTransferEvent has copy, drop {
+        from: address,
+        to: address
+    }
+
+    //Event of NFT Transfer When Coins are Deposited
+    public struct NFTOwnerCap has copy, drop {
+        from: address,
+        to: address,
+    }
 }
