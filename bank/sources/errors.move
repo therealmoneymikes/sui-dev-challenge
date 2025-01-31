@@ -17,6 +17,7 @@ module bank::errors {
  
      const GEUNAUTHORISED_USER_ACCESS: u64 = 1004; //Error Condition for unauthorised user actions e.g NFT transfers to another user
     
+    
 
     /* Testing Environment Smart Contract Inteactions*/
     // Asset Bank State Testing on First User Interaction
