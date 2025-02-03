@@ -1,0 +1,217 @@
+// //https://yakitori.dev/blog/00-sui-move-for-solidity-devs/#object-ownership
+// #[allow(unused_use)]
+// module bank::bank {
+
+    
+//     //standard libs
+//     use std::type_name::{Self, TypeName};
+//     use std::string::{Self, String};
+//     //standard sui libs
+//     use sui::event; //For Handling Events for NFT contract interaction
+//     use sui::balance::{Self, Balance};
+//     use sui::coin::{Self, Coin};
+//     use sui::object::{new};
+
+//     //custom source libs
+//     use bank::ownership::{AdminCap, NFTOwnerCap}; //Ownership Models
+//     use bank::events::{Self}; //Custom Event Objects
+//     use bank::errors::{ge_zero_user_insufficient_funds}; //Custom Errors
+
+
+ 
+    
+
+//     // use sui::balance::{Self, Balance}
+//     //Asset Bank for NFT TX Data
+//     //Add Copy Trait to clone, Drop Trait = drop to end lifetime at the EOO, Copy Trait = copy on OO, Key for Sui Global Storage Operations
+//     //UID - id structure with type address and key traitID - General ID, Note to self: drop and copy conflicts with key
+
+//     //Traits: 
+//     //key - so that AssetBank can be stored on chain
+//     //store - so that AssetBank can be stored in global storage
+    
+//     //Deposit Record - Helper Object
+//      //Helper Functiont that checks if coin type is allowed - ENUMS and MATCH is causing errors
+//     // public fun coin_type_is_allowed(coin_type: AllowedCoinTypes): String {
+//     //     match (coin_type){
+//     //         AllowedCoinTypes::USDC => string::uft8(b"USDC"), //USDC in String
+//     //         AllowedCoinTypes::USDT => string::uft8(b"USDT"), //USDT is String
+//     //         AllowedCoinTypes::SUI => string::uft8(b"SUI"), //SUI is String
+//     //         _ => std::string::uft8(b"NOTALLOWED") //NOTALLOWED is String
+            
+//     //     }
+//     // }
+
+//     //Coin Type Constants 
+//     const USDC: vector<u8> = b"USDC";
+//     const USDT: vector<u8> = b"USDT";
+//     const SUI: vector<u8> = b"SUI";
+//     //Enum of Allowed Coin Types
+//     public enum AllowedCoinTypes has drop {
+//         USDC,
+//         USDT,
+//         SUI
+//     }
+
+//     public struct AllowedCoinTypesStruct<AllowedCoinTypes> has copy, drop, store  {
+//         coin_type: String
+//     }
+   
+
+//       public struct CoinValueObject has store {
+//         coin_type: vector<u8>, 
+//         amount: u64
+//       }
+//       public struct DepositRecordObject has store {
+//         key: address,
+//         value: CoinValueObject
+//     }
+
+//     fun create_record_vector(): vector<DepositRecordObject> {
+//         vector::empty<DepositRecordObject>()
+//     }
+    
+
+//     //AssetBank Object
+//     public struct AssetBank has key, store {
+//         id: UID, //UID for AssetBank Unique 
+//         deposit_count: u64, //For tracking number of deposits to the bank
+//         number_of_active_nfts: u64, //For current of nft deposited in
+//         admin: address, //Admin of the Asset Bank Object
+//         deposits: vector<DepositRecordObject>, //Store all the deposit receipts
+//         total_balance: u64
+//     }
+//     // Asset Bank Initialisation Event 
+//     public struct AssetBankInitEvent has copy, drop {
+//         asset_bank_id: ID,
+//         creator: address,
+//         deposit_count: u64,
+//         nft_count: u64,
+//     }
+//     // Public View Functions Interfaces for On-Chain Asset Bank Interactions
+//     public fun get_deposit_count(bank: &AssetBank): &u64 {
+//         &bank.deposit_count
+//     }
+//     public fun get_number_of_active_nfts(bank: &AssetBank): &u64 {
+//         &bank.number_of_active_nfts
+//     }
+
+//     public fun get_admin(bank: &AssetBank): &address {
+//         &bank.admin
+//     }
+
+//     public fun get_receipts(bank: &AssetBank): &vector<DepositRecordObject> {
+//         &bank.deposits
+//     }
+
+//      //NFT Receipt Object 
+//     public struct Receipt<AllowedCoinTypes> has key, store {
+//         id: UID, //Global SUI ID 
+//         nft_count: u64, //NFT count value
+//         address_of_depositor: address, //Address of the Coin Depositor
+//         amount_deposited: u64, //Amount of tokens deposited
+//         coin_type: AllowedCoinTypes
+//     }
+
+
+//       //Deposit Functionaility 
+//       public entry fun deposit<AllowedCoinTypes>(bank: &mut AssetBank, coin: Coin<AllowedCoinTypes>, ctx: &mut TxContext){
+
+//         //1. Revert if the balance of the provided coin object is ZERO
+//         //Coin struct has two props, id and balance only need the balance right now
+//         let coin_amount = coin.value(); //returns self.balance.value()
+//         if(coin_amount == 0){
+//             //If balance is zero we abort the process
+//             abort bank::errors::ge_zero_user_insufficient_funds();
+//         };
+
+//        //2. Take the user coin and deposit in the bank object
+//        //keep track of coin and depositor Vec of deposit objects
+//         //According to the challenge T is Coin Type
+//         let coin_type_name = type_name::get<AllowedCoinTypes>(); //Get Parameter name as Typename Struct at runtime (at deployment)
+//         let coin_type_name_as_string = std::type_name::into_string(coin_type_name); //Extracting the TypeName Struct String as vector<u8>
+        
+//         //MATCH EXPRESSIONS ARE NOT WORKING SO ALTERNATIVE
+//         if(!(coin_type_name_as_string == b"USDC" || coin_type_name_as_string == b"USDT" || coin_type_name_as_string == b"SUI")) { 
+//                 abort bank::errors::ge_coin_type_not_allowed();
+//             }; 
+        
+
+//         //Create User Deposit Record Vector - Shape: key: address, value {coin_type, amount} 
+//         let userObject = DepositRecordObject { key: ctx.sender(), value: CoinValueObject {coin_type: coin_type_name_as_string, amount: coin_amount} };
+
+//        //Check if call has already deposited already first - assuming one nft deposit per user max
+//        //1st ARG: Take reference to depositor Vector of type DepositRecordVector
+//        //2nd ARG: Take reference to the userObject composed from the function caller and balance
+//         let alreadyExists = vector::contains<DepositRecordObject>(&bank.deposits, &userObject);
+//         if(alreadyExists){
+//         //Looking for existing users address based on the Deposit Object by their address
+//         //If the user already exists we abort 
+//             abort bank::errors::ge_user_already_deposited_nft();
+//         };
+//             //Push the user Object to the bank deposits vector
+//             //&vector<bank::bank::DepositRecordObject>
+          
+//         vector::push_back<DepositRecordObject>(&mut bank.deposits, userObject);
+//         //Extract user coin balance and add it the asset bank balance
+
+//         //using into_balance method to ensure coin is consumed
+//         let coin_balance = sui::coin::into_balance(coin); //Take coin and covert it to balance
+//         let balance = sui::balance::value(&coin_balance); //Extract value as a u64 from coin balance
+            
+//         //Consume the coin 
+//         //3. Increase the number of deposits
+//         //4. Increase the number of active NFTs
+//         //5. Increase the total balance of the asset bank
+//         bank.deposit_count = bank.deposit_count + 1; //Update deposit count state
+//         bank.number_of_active_nfts = bank.number_of_active_nfts + 1; //Update active NFT state
+//         bank.total_balance = bank.total_balance + balance; //Update total balance
+        
+        
+//             //6. Emit an appropraite deposit event
+//             //emit_deposit_event
+//             //1. 1st arg - deposit_amount as u64
+//             //2. 2nd arg - transaction senders address
+           
+//         bank::events::emit_deposit_event(balance, ctx.sender());
+
+
+//         //7. Transfer NFT - Call internal create NFT Function
+//         // let deposited_type = 
+       
+//         transfer::public_transfer(nft_receipt, ctx.sender());
+//         }
+  
+     
+
+    
+//     //Bank Contract Constructor Function
+//     //On initialisation creates an AssetBank as shared global object that user can interact with
+//     fun init(ctx: &mut TxContext) {
+//         let sender = ctx.sender();
+//         let asset_bank = AssetBank {
+//             id: object::new(ctx), //Assign UID to register on Sui
+//             deposit_count: 0,//Initial Deposit State is 0 on deployment
+//             number_of_active_nfts: 0,//Initial NFT Count state is 0 on deployment
+//             admin: tx_context::sender(ctx), //Contract Initialiser -> Admin 
+//             deposits: create_record_vector(),
+//             total_balance: 0
+//         };
+
+        
+//         //Emit an event for the creation of the AssetBank
+//         event::emit(AssetBankInitEvent {
+//             asset_bank_id: object::id(&asset_bank),
+//             creator: sender, //Initialisor of the AssetBank Contract
+//             deposit_count: asset_bank.deposit_count, //Immutable ref to assetbanks initial deposit count
+//             nft_count: asset_bank.number_of_active_nfts,    
+//         });
+
+//         //On creation transfer the object
+//         transfer::share_object(asset_bank)
+
+//     }
+
+  
+// }
+  
