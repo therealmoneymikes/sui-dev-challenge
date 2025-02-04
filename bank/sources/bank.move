@@ -99,7 +99,11 @@ module bank::bank;
     public fun treasury_count(bank: &AssetBank): &u64 {
         &bank.treasury_count
     }
- 
+    
+
+    //**** ONE TIME WITNESSES **/
+    public struct BANK has drop {}//Treasury Witness to ensure bank is only initiialised once
+    public struct TREASURYWITNESS has drop {} //Treasury Witness to ensure the Treasury is created once only
 
 
 
@@ -121,7 +125,7 @@ module bank::bank;
         coin_vault: Balance<T>, //Coin type
     }
     //Init treasury function - Avoiding the error trying pass a generic type to constructor
-    fun create_treasury<T>(ctx: &mut TxContext, bank_uid: &UID): Treasury<T> {
+    fun create_treasury<T>(_: TREASURYWITNESS, ctx: &mut TxContext, bank_uid: &UID): Treasury<T> {
         let inner_bank_id = bank_uid.uid_to_inner();
         let treasury = Treasury {id: object::new(ctx), asset_bank_id: inner_bank_id, vault: object_table::new(ctx), coin_vault: balance::zero<T>()};
         treasury
@@ -390,7 +394,7 @@ module bank::bank;
 //****** MAIN CONTRACT FUNCTIONAILITY - INITIALISERS **********/   
 
 //****** SMART CONTRACT CONSTRUCTOR FUNCTION - START (ASSETBANK) **********/   
-     fun init(ctx: &mut TxContext) {
+     fun init(_:BANK, ctx: &mut TxContext) {
         //Share the AssetBank Object with user to call the methods deposit and withdraw
         let asset_bank_id = object::new(ctx);
         let asset_bank = AssetBank {
@@ -406,15 +410,17 @@ module bank::bank;
          asset_bank_init_event(ctx, &asset_bank.id,  &asset_bank.number_of_deposits, &asset_bank.number_of_active_nfts,  &asset_bank.total_treasury_balance);
         //Make the Asset Bank Available
         transfer::share_object(asset_bank);
-     }
+     }  
 //****** SMART CONTRACT CONSTRUCTOR FUNCTION - END  (ASSETBANK) **********/   
+//
 
 
 
 //****** SMART CONTRACT CONSTRUCTOR FUNCTION - START (TREASURY) **********/ 
 
      //Extract mutable reference to the Asset Bank to extract the current property state
-     public entry fun init_treasury<T>(bank: &mut AssetBank, ctx: &mut TxContext){
+     #[allow(lint(self_transfer))]
+     public fun init_treasury<T>(_treasury_witness: TREASURYWITNESS, bank: &mut AssetBank, ctx: &mut TxContext){
         //1. Check first the initialise of this function is admin to avoid issues
         assert!(bank.admin == ctx.sender(), GE_UNAUTHORISED_USER_ACCESS);
         //2. Check to make the treasury has not already been initialised so that we do create more than one asset bank
@@ -424,7 +430,8 @@ module bank::bank;
 
         //Create the asset bank treasury facility
         //Params: treasury ID, 2nd Bank Id, 3rd T
-        let treasury = create_treasury<T>(ctx, &bank.id);
+        //OTW Pass here
+        let treasury = create_treasury<T>(_treasury_witness,ctx, &bank.id);
         
         //4. Update the state of the asset bank
         bank.is_treasury_initialised = true; //treasury flag
@@ -432,6 +439,7 @@ module bank::bank;
         //5. Emit a Treasury Init Event
         //&treasury.id - &UID, 
         //Move allows for &mut - & by param passing
+        
         emit_treasury_init_event(&bank.id, &treasury.id);
         
 
