@@ -111,23 +111,24 @@ module bank::bank;
     //****** TREASURY LOGIC - START **********/
 
     //T coin the store and copy - Struct to hold coin_type and amount as an object
-    public struct CoinTypeStruct has store, key {
+    public struct CoinTypeStruct<phantom T> has key, store {
          id: UID,
          coin_type: String, //Vector of Bytes = String Type in the std as ascii's
          amount: u64,
+         balance: Balance<T>
          
     }
     //CHANGEE: Since AssetBank is not of type T Treasury Object is needed here
-    public struct Treasury<phantom T> has key, store {
+    public struct Treasury<T: store + key> has key, store {
         id: UID, //Unique Id of the treasury
         asset_bank_id: ID, //Asset Bank ID stored to declare Treasury -> Asset Bank Relationship
-        vault: ObjectTable<address, CoinTypeStruct>, //User balance table to store address and amounts
-        coin_vault: Balance<T>, //Coin type
+        vault: ObjectTable<address, CoinTypeStruct<T>>, //User balance table to store address and amounts
+        //coin_vault: Balance<T>, //Coin type
     }
     //Init treasury function - Avoiding the error trying pass a generic type to constructor
-    fun create_treasury<T>(_: TREASURYWITNESS, ctx: &mut TxContext, bank_uid: &UID): Treasury<T> {
+    fun create_treasury<T: store + key>(_: TREASURYWITNESS, ctx: &mut TxContext, bank_uid: &UID): Treasury<T> {
         let inner_bank_id = bank_uid.uid_to_inner();
-        let treasury = Treasury {id: object::new(ctx), asset_bank_id: inner_bank_id, vault: object_table::new(ctx), coin_vault: balance::zero<T>()};
+        let treasury = Treasury {id: object::new(ctx), asset_bank_id: inner_bank_id, vault: object_table::new(ctx)};
         treasury
     }
 
@@ -233,6 +234,8 @@ module bank::bank;
     //T value passed in must have the store, key and copy trait
     #[allow(lint(self_transfer))] 
     public fun deposit<T: store + key + copy>(bank: &mut AssetBank, coin: Coin<T>, treasury: &mut Treasury<T>, ctx: &mut TxContext) {
+
+        //const SUI_TYPE_NAME: vector<u8> = b"0000000000000000000000000000000000000000000000000000000000000002::sui::SUI";
     //1. Check if the treasury is activated first
     assert!(bank.is_treasury_initialised == true, GE_TREASURY_IS_NOT_INITIALISED);
     //Do need to the count state because it will always be one
@@ -254,9 +257,11 @@ module bank::bank;
     //coin_amount -> total_coin_amount owns the data
     // let total_coin_amount_as_coin = coin.into_balance(); 
     // let total_coin_amount_as_u64 = total_coin_amount_as_coin.value();//Returns u64
+    // vault: ObjectTable<address, CoinTypeStruct<T>>
     let amount = coin_amount;
-    let amount_struct = CoinTypeStruct {id: object::new(ctx), coin_type: coin_from_ascii_to_utf8, amount};
+    let amount_struct = CoinTypeStruct {id: object::new(ctx), coin_type: coin_from_ascii_to_utf8, amount, balance: coin.into_balance()};
     
+    treasury.vault.add(ctx.sender(), amount_struct); //Add the new entry to Treasury Object then update the Asset Bank
 
     
     //3. Increase the number of deposits
@@ -268,7 +273,6 @@ module bank::bank;
     bank.number_of_active_nfts = bank.number_of_active_nfts + 1; //Update active NFT state
     bank.total_treasury_balance = bank.total_treasury_balance + amount; //Update total balance
 
-    treasury.vault.add(ctx.sender(), amount_struct); //Add the new entry to Treasury Object then update the Asset Bank
     //6. Generate NFT Receipt - Call Mint NFT function
     //  let get_coin_type = type_name::get<T>().into_string();
     // let get_coin_type_ascii_to_utf8 = std::string::from_ascii(get_coin_type);
@@ -282,9 +286,6 @@ module bank::bank;
 
             
         };
-    //Coin balance
-    let coin_balance = coin.into_balance();//Coin<T> - Balance<T>
-    treasury.coin_vault.join(coin_balance);//Add the Balance<T> of Coin<T> to the existing treasury balance - Coin should be consumed now
     
 
      //7. Emit a Treasury Deposit Event
@@ -307,7 +308,7 @@ module bank::bank;
     //3rd Params because we must manage the proxy relationship between the treasury and asset bank comms 
     //4th Params because accessing current transaction context is impossible without it
     #[allow(lint(self_transfer))]
-    public fun withdraw<T>(bank: &mut AssetBank, receipt: Receipt<T>, treasury: &mut Treasury<T>, ctx: &mut TxContext) {
+    public fun withdraw<T: store + key>(bank: &mut AssetBank, receipt: Receipt<T>, treasury: &mut Treasury<T>, ctx: &mut TxContext) {
         //UPDATE - On reviewing the caller of the function needs to verified before state management
         //1. Check if we have an active treasury available for the for transaction handling
         
@@ -420,7 +421,7 @@ module bank::bank;
 
      //Extract mutable reference to the Asset Bank to extract the current property state
      #[allow(lint(self_transfer))]
-     public fun init_treasury<T>(_treasury_witness: TREASURYWITNESS, bank: &mut AssetBank, ctx: &mut TxContext){
+     public fun init_treasury<T: store + key>(_treasury_witness: TREASURYWITNESS, bank: &mut AssetBank, ctx: &mut TxContext){
         //1. Check first the initialise of this function is admin to avoid issues
         assert!(bank.admin == ctx.sender(), GE_UNAUTHORISED_USER_ACCESS);
         //2. Check to make the treasury has not already been initialised so that we do create more than one asset bank
