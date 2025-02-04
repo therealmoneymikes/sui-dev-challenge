@@ -109,7 +109,7 @@ sui client publish --gas-budget 10000000
     sui client call --function bank --module deposit
     --package <YOUR_PACKAGE_ID> --gas-budget 10000000
 ```
-##For more info gas, visit the official move book referenece - https://move-book.com/your-first-move hello-sui.html ##
+##For more info gas, visit the official move book referenece - <https://move-book.com/your-first-move> hello-sui.html ##
 
 ## 📚 Project Structure
 

@@ -119,6 +119,7 @@ module bank::bank;
          
     }
     //CHANGEE: Since AssetBank is not of type T Treasury Object is needed here
+    #[allow(missing_phantom)]
     public struct Treasury<T: store + key> has key, store {
         id: UID, //Unique Id of the treasury
         asset_bank_id: ID, //Asset Bank ID stored to declare Treasury -> Asset Bank Relationship
